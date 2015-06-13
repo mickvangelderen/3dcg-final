@@ -10,12 +10,15 @@
 #include "lib/keys.h"
 #include "lib/delta.h"
 #include <iostream>
+#include <glm/vec4.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using std::cout;
 using std::endl;
+using namespace glm;
 
-float LightPos[4] = {2,1,0.4,1};
-float LightTargetPos[4] = {2,1,0.4,1};
+vec4 LightPos(2, 1, 0.4, 1);
+vec4 LightTargetPos(2, 1, 0.4, 1);
 
 //function to draw coordinate axes with a certain length (1 as a default)
 void drawCoordSystem(float length=1)
@@ -51,19 +54,37 @@ void drawLight() {
 
 }
 
+float cubeRotation = 0;
+GLfloat redDiffuseMaterial[] = {1.0, 0.0, 0.0, 1.0};
+GLfloat whiteSpecularMaterial[] = {1.0, 1.0, 1.0, 1.0};
+GLfloat greenEmissiveMaterial[] = {0.0, 1.0, 0.0, 1.0};
+GLfloat whiteSpecularLight[] = {1.0, 1.0, 1.0, 1.0};
+GLfloat blackAmbientLight[] = {0.0, 0.0, 0.0, 1.0};
+GLfloat whiteDiffuseLight[] = {1.0, 1.0, 1.0, 1.0};
+GLfloat blankMaterial[] = {0.0, 0.0, 0.0, 1.0};
+GLfloat mShininess[] = {128};
+
 void render()
 {
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
+
 	glTranslatef(0,0,-4);
 
-	// tbVisuTransform(); // origine et orientation de la scene
-
-	//set the light to the right position
-	glLightfv(GL_LIGHT0,GL_POSITION,LightPos);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, whiteSpecularLight);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, blackAmbientLight);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteDiffuseLight);
+    glLightfv(GL_LIGHT0, GL_POSITION, value_ptr(LightPos));
 	drawLight();
+
+
+	glPushMatrix();
+		glTranslatef(0, 0, -4);
+		glRotatef(cubeRotation, 1, .8, .6);
+		glutSolidTeapot(1);
+	glPopMatrix();
 
 	drawCoordSystem();
 
@@ -74,12 +95,14 @@ void render()
 void animate() {
 	float delta = delta::update();
 
-	if (keys::held((unsigned char) 'd')) LightTargetPos[0] += 2.0*delta;
-	if (keys::held((unsigned char) 'a')) LightTargetPos[0] -= 2.0*delta;
-	if (keys::held((unsigned char) 'w')) LightTargetPos[1] += 2.0*delta;
-	if (keys::held((unsigned char) 's')) LightTargetPos[1] -= 2.0*delta;
-	if (keys::held((unsigned char) 'q')) LightTargetPos[2] += 2.0*delta;
-	if (keys::held((unsigned char) 'z')) LightTargetPos[2] -= 2.0*delta;
+	cubeRotation += 90*delta;
+
+	if (keys::held((unsigned char) 'd')) LightTargetPos[0] += 3.0*delta;
+	if (keys::held((unsigned char) 'a')) LightTargetPos[0] -= 3.0*delta;
+	if (keys::held((unsigned char) 'w')) LightTargetPos[1] += 3.0*delta;
+	if (keys::held((unsigned char) 's')) LightTargetPos[1] -= 3.0*delta;
+	if (keys::held((unsigned char) 'q')) LightTargetPos[2] += 3.0*delta;
+	if (keys::held((unsigned char) 'z')) LightTargetPos[2] -= 3.0*delta;
 
 	LightPos[0] += (LightTargetPos[0] - LightPos[0])/10.0f;
 	LightPos[1] += (LightTargetPos[1] - LightPos[1])/10.0f;
@@ -96,6 +119,29 @@ void onKeyDown(unsigned char key, int x, int y) {
 
 	if (key == 'L') glEnable(GL_LIGHTING);
 	if (key == 'l') glDisable(GL_LIGHTING);
+
+	if (key == 's') {
+		glMaterialfv(GL_FRONT, GL_SPECULAR, whiteSpecularMaterial);
+		glMateriali(GL_FRONT, GL_SHININESS, 128);
+	}
+	if (key == 'S') {
+		glMaterialfv(GL_FRONT, GL_SPECULAR, blankMaterial);
+		glMateriali(GL_FRONT, GL_SHININESS, 0);
+	}
+
+	if (key == 'd') {
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, redDiffuseMaterial);
+	}
+	if (key == 'D') {
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, blankMaterial);
+	}
+
+	if (key == 'e') {
+		glMaterialfv(GL_FRONT, GL_EMISSION, greenEmissiveMaterial);
+	}
+	if (key == 'E') {
+		glMaterialfv(GL_FRONT, GL_EMISSION, blankMaterial);
+	}
 }
 
 void onKeyUp(unsigned char key, int x, int y) {
@@ -104,6 +150,7 @@ void onKeyUp(unsigned char key, int x, int y) {
 
 void onSpecialKeyDown(int key, int x, int y) {
 	keys::onSpecialDown(key);
+
 }
 
 void onSpecialKeyUp(int key, int x, int y) {
@@ -136,9 +183,9 @@ int main(int argc, char** argv) {
 	glutInitWindowSize(800,600);
 	glutCreateWindow(argv[0]);
 
-	glDisable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_COLOR_MATERIAL);
+	// glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_DEPTH_TEST);
 
