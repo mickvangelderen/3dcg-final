@@ -9,7 +9,7 @@ all: build run
 
 .PHONY: build
 build:
-	g++ $(SOURCES) $(INCLUDES) $(LIBRARIES) $(WARNINGS) -o bin/game
+	g++ -std=c++11 $(SOURCES) $(INCLUDES) $(LIBRARIES) $(WARNINGS) -o bin/game
 
 .PHONY: run
 run:

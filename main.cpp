@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "lib/keys.h"
+#include "lib/Keyboard.h"
 #include "lib/DeltaTimer.h"
 #include "lib/generate_grid.h"
 #include "lib/generate_mountain.h"
@@ -32,6 +32,8 @@ using glm::mat4;
 
 vector<vec4> lights;
 DeltaTimer deltaTimer;
+
+Keyboard keyboard(256);
 
 void initializeLights() {
 	lights.resize(2);
@@ -193,38 +195,29 @@ float l1rot = 0;
 
 void animate() {
 	float delta = deltaTimer.update();
+	keyboard.update();
 
 	l1rot += delta;
 	lights[0] = vec4(0.0f, 4*cos(l1rot), 4*sin(l1rot), 1.0f);
 
-	// vec3 lmov;
-	// if (keys::held((unsigned char) 'd')) lmov.x = 1.0f;
-	// if (keys::held((unsigned char) 'a')) lmov.x = -1.0f;
-	// if (keys::held((unsigned char) 'w')) lmov.y = 1.0f;
-	// if (keys::held((unsigned char) 's')) lmov.y = -1.0f;
-	// if (keys::held((unsigned char) 'q')) lmov.z = 1.0f;
-	// if (keys::held((unsigned char) 'z')) lmov.z = -1.0f;
-	// lights[0] += 2*delta*lmov;
-	// lights[1] += 3*delta*lmov;
-
 	vec3 crot(0.0f, 0.0f, 0.0f);
-	if (keys::held((unsigned char) 'l')) crot.z = -delta;
-	if (keys::held((unsigned char) 'j')) crot.z = delta;
-	if (keys::held((unsigned char) 'i')) crot.x = delta;
-	if (keys::held((unsigned char) 'k')) crot.x = -delta;
-	if (keys::held((unsigned char) 'u')) crot.y = delta;
-	if (keys::held((unsigned char) 'o')) crot.y = -delta;
+	if (keyboard.held('l')) crot.z = -delta;
+	if (keyboard.held('j')) crot.z = delta;
+	if (keyboard.held('i')) crot.x = delta;
+	if (keyboard.held('k')) crot.x = -delta;
+	if (keyboard.held('u')) crot.y = delta;
+	if (keyboard.held('o')) crot.y = -delta;
 	camera_rotation_velocity += crot;
 	camera_rotation_velocity *= 0.9f;
 	crot += 0.2f*camera_rotation_velocity;
 
 	vec3 cmov(0.0f, 0.0f, 0.0f);
-	if (keys::held((unsigned char) 'd')) cmov.x = delta;
-	if (keys::held((unsigned char) 'a')) cmov.x = -delta;
-	if (keys::held((unsigned char) 'w')) cmov.z = -delta;
-	if (keys::held((unsigned char) 's')) cmov.z = delta;
-	if (keys::held((unsigned char) 'q')) cmov.y = delta;
-	if (keys::held((unsigned char) 'z')) cmov.y = -delta;
+	if (keyboard.held('d')) cmov.x = delta;
+	if (keyboard.held('a')) cmov.x = -delta;
+	if (keyboard.held('w')) cmov.z = -delta;
+	if (keyboard.held('s')) cmov.z = delta;
+	if (keyboard.held('q')) cmov.y = delta;
+	if (keyboard.held('z')) cmov.y = -delta;
 	camera_position_velocity += cmov;
 	camera_position_velocity *= 0.9f;
 	cmov += 5.0f*camera_position_velocity;
@@ -240,7 +233,7 @@ void animate() {
 
 //take keyboard input into account
 void onKeyDown(unsigned char key, int x, int y) {
-	keys::onDown(key);
+	keyboard.press(key);
 
 	const char ESC = 27;
 
@@ -248,16 +241,16 @@ void onKeyDown(unsigned char key, int x, int y) {
 }
 
 void onKeyUp(unsigned char key, int x, int y) {
-	keys::onUp(key);
+	keyboard.release(key);
 }
 
 void onSpecialKeyDown(int key, int x, int y) {
-	keys::onSpecialDown(key);
+	// keys::onSpecialDown(key);
 
 }
 
 void onSpecialKeyUp(int key, int x, int y) {
-	keys::onSpecialUp(key);
+	// keys::onSpecialUp(key);
 }
 
 int last_mouse_x;
