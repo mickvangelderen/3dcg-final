@@ -31,35 +31,12 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-vector<vec4> lights;
 DeltaTimer deltaTimer;
-
 Keyboard keyboard(256);
 Keyboard special(256);
 Mouse mouse;
 
-void initializeLights() {
-	lights.resize(2);
-	lights[0] = vec4( 1.0f, 1.0f, 3.0f, 1.0f);
-	lights[1] = vec4(-2.0f, 4.0f, 5.0f, 1.0f);
-
-	float w[] = { 1, 1, 0.8f, 1 };
-	float b[] = { 0, 0.1f, 0.3f, 1 };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, w);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, b);
-}
-
-void drawLight(const mat4 & transform, const vec4 & light) {
-	if (light.w == 0.0f) return;
-	mat4 local = glm::translate(transform, vec3(light)/light.w);
-	glLoadMatrixf(glm::value_ptr(local));
-	glPushAttrib(GL_LIGHTING);
-	glDisable(GL_LIGHTING);
-	glColor3f(1,1,0);
-	glutSolidSphere(0.2, 8, 8);
-	glPopAttrib();
-	glLoadMatrixf(glm::value_ptr(transform));
-}
+// Axes
 
 void drawAxes(float length = 1) {
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -81,6 +58,46 @@ void drawAxes(float length = 1) {
 	glEnd();
 	glPopAttrib();
 }
+
+// Lights.
+
+vector<vec4> lights;
+vector<vec4> lightsDiffuse;
+
+void initializeLights() {
+	lights.resize(2);
+	lights[0] = vec4( 1.0f, 1.0f, 3.0f, 1.0f);
+	lights[1] = vec4(-2.0f, 4.0f, 5.0f, 1.0f);
+	lightsDiffuse.resize(2);
+	lightsDiffuse[0] = vec4( 1, 1, 0.8f, 1 );
+	lightsDiffuse[1] = vec4( 0, 0.1f, 0.3f, 1 );
+}
+
+void drawLight(const vec3 & color) {
+	glPushAttrib(GL_LIGHTING);
+		glDisable(GL_LIGHTING);
+		glColor3fv(glm::value_ptr(color));
+		glutSolidSphere(1, 8, 8);
+	glPopAttrib();
+}
+
+void renderLights(const mat4 & transform) {
+	glLoadMatrixf(glm::value_ptr(transform));
+	for (vector<vec3>::size_type il = 0; il < lights.size(); il++) {
+		vec4 diffuse = lightsDiffuse[il];
+		vec4 light = lights[il];
+		if (light.w == 0.0f) return;
+		vec3 pos = vec3(light)/light.w;
+		glPushMatrix();
+			glTranslatef(pos.x, pos.y, pos.z);
+			drawLight(vec3(diffuse));
+		glPopMatrix();
+		glLightfv(GL_LIGHT0 + il, GL_DIFFUSE, glm::value_ptr(diffuse));
+		glLightfv(GL_LIGHT0 + il, GL_POSITION, glm::value_ptr(light));
+	}
+}
+
+// Surface.
 
 ivec2 surfaceSize(40, 40);
 vec3 surfaceScale(8.0f, 8.0f, 2.0f);
@@ -140,7 +157,7 @@ void initializeSurface() {
 	}
 }
 
-void drawSurface(const mat4 & transform) {
+void drawSurface() {
 	glBegin(GL_TRIANGLES);
 	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
 		ivec3 ivs = surfaceTriangles[it];
@@ -153,6 +170,14 @@ void drawSurface(const mat4 & transform) {
 	glEnd();
 }
 
+void renderSurface(const mat4 & transform) {
+	mat4 local = glm::scale(transform, surfaceScale);
+	glLoadMatrixf(glm::value_ptr(local));
+	drawSurface();
+}
+
+// Camera.
+
 vec3 camera_position_velocity(0.0f, 0.0f, 0.0f);
 vec3 camera_rotation_velocity(0.0f, 0.0f, 0.0f);
 mat4 camera(1.0f);
@@ -164,35 +189,27 @@ void initializeCamera() {
 	camera = glm::inverse(camera);
 }
 
-void render()
-{
+// Rendering
+
+void render() {
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
 	mat4 transform = glm::inverse(camera);
-
 	glLoadMatrixf(glm::value_ptr(transform));
 
-	for (vector<vec3>::size_type il = 0; il < lights.size(); il++) {
-		glPushMatrix();
-			glTranslatef(lights[il].x, lights[il].y, lights[il].z);
-			glutSolidSphere(0.1, 8, 8);
-		glPopMatrix();
-		glLightfv(GL_LIGHT0 + il, GL_POSITION, glm::value_ptr(lights[il]));
-		// drawLight(transform, lights[il]);
-		// glLightfv(GL_LIGHT0 + il, GL_POSITION, glm::value_ptr(lights[il]));
-	}
+	renderLights(transform);
 
-	// drawAxes();
-
-	mat4 surfaceTransform = glm::scale(transform, surfaceScale);
-	glLoadMatrixf(glm::value_ptr(surfaceTransform));
-	drawSurface(transform);
 	glLoadMatrixf(glm::value_ptr(transform));
+	drawAxes();
+
+	renderSurface(transform);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
+
+// Animation.
 
 float l1rot = 0;
 
@@ -236,7 +253,6 @@ void animate() {
 	camera = camera*mcam;
 }
 
-//take keyboard input into account
 void onKeyDown(unsigned char key, int x, int y) {
 	keyboard.press(key);
 
