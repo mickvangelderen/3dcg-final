@@ -1,5 +1,5 @@
 COMPILER = g++
-SOURCES = *.cpp lib/*.cpp
+SOURCES = main.cpp lib/*.cpp
 INCLUDES = -I.
 LIBRARIES = -L./GL -lGL -lGLU -lglut
 WARNINGS = -Wall -Wno-comment

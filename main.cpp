@@ -1,14 +1,16 @@
 #if defined(_WIN32)
 	#include <windows.h>
 #endif
+#include <math.h>
 #include "glut.h"
+#include "lib/Bullet.h"
 #include "lib/DeltaTimer.h"
 #include "lib/generate_grid.h"
 #include "lib/generate_mountain.h"
 #include "lib/Keyboard.h"
-#include "lib/Mouse.h"
-#include "loadppm.h"
 #include "lib/Model.h"
+#include "lib/Mouse.h"
+#include "lib/resources.h"
 #include <assert.h>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,7 +20,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <iostream>
-#include <math.h>
+#include <list>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +35,7 @@ using glm::vec4;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::list;
 
 DeltaTimer deltaTimer;
 Keyboard keyboard(256);
@@ -162,7 +165,7 @@ void renderSurface(const mat4 & transform) {
 			float rsx = (float) ix/surfaceSize.x;
 			float rsy = (float) iy/surfaceSize.y;
 
-			float c = (cos(rsx*glm::pi<float>()) + 1.0f)/2.0f; // Flatten 1 side.
+			float c = (glm::cos(rsx*glm::pi<float>()) + 1.0f)/2.0f; // Flatten 1 side.
 			float z = c*surfaceHeights[ih];
 			if (z < 0.0f) z = 0.0f;
 			surfaceVertices[iv] = vec3(rsx - offsetx - 0.5, rsy - offsety - 0.5, z);
@@ -280,7 +283,7 @@ void drawPlayerLeg() {
 
 void renderPlayerLeg(const mat4 & transform, float direction) {
 	mat4 local = transform;
-	local = glm::rotate(local, sin(direction*playerLegRotation)*0.5f, vec3(1.0f, 0.0f, 0.0f));
+	local = glm::rotate(local, glm::sin(direction*playerLegRotation)*0.5f, vec3(1.0f, 0.0f, 0.0f));
 	local = glm::scale(local, vec3(0.08f, 0.08f, 0.24f));
 	local = glm::translate(local, vec3(0.0f, 0.0f, -0.5f));
 	glLoadMatrixf(glm::value_ptr(local));
@@ -304,6 +307,10 @@ void renderPlayer(const mat4 & transform) {
 	drawPlayer();
 }
 
+// Bullets.
+
+list<Bullet> bullets;
+
 // Camera.
 
 vec3 camera_position_velocity(0.0f, 0.0f, 0.0f);
@@ -325,7 +332,7 @@ float daynight = 0;
 void render() {
 	vec3 day = vec3(94, 127, 232)/256.0f;
 	vec3 night = vec3(5, 12, 22)/256.0f;
-	vec3 clear = glm::mix(night, day, (sin(daynight) + 1.0f)/2.0f);
+	vec3 clear = glm::mix(night, day, (glm::sin(daynight) + 1.0f)/2.0f);
 	glClearColor(clear.r, clear.g, clear.b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
@@ -339,6 +346,10 @@ void render() {
 	renderfloor(transform);
 
 	renderPlayer(transform);
+
+	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
+		ib->render(transform);
+	}
 
 	glLoadMatrixf(glm::value_ptr(transform));
 	drawLight(0, lightPositions[0], lightDiffuses[0], lightIntensities[0]);
@@ -362,8 +373,8 @@ void animate() {
 
 	// Update day/night cycle.
 	daynight += delta*0.4f;
-	lightPositions[0] = vec4(0.0f, 8*cos(daynight), 8*sin(daynight), 1.0f);
-	lightIntensities[0] = (sin(daynight) + 1.0f)/2.0f;
+	lightPositions[0] = vec4(0.0f, 8*glm::cos(daynight), 8*glm::sin(daynight), 1.0f);
+	lightIntensities[0] = (glm::sin(daynight) + 1.0f)/2.0f;
 
 	// Player movement.
 	if (keyboard.pressed(' ')) playerVelocity += vec3(0.0f, 0.0f, 4.0f);
@@ -372,11 +383,11 @@ void animate() {
 	playerPosition += delta*playerVelocity;
 	if (playerPosition.z < playerMinPosition.z) {
 		playerPosition.z = playerMinPosition.z;
-		playerVelocity.z = max(playerVelocity.z, 0.0f);
+		playerVelocity.z = glm::max(playerVelocity.z, 0.0f);
 	}
 	if (playerPosition.z > playerMaxPosition.z) {
 		playerPosition.z = playerMaxPosition.z;
-		playerVelocity.z = min(playerVelocity.z, 0.0f);
+		playerVelocity.z = glm::min(playerVelocity.z, 0.0f);
 	}
 	playerRotation.x = atan2(playerVelocity.z, 4);
 
@@ -391,6 +402,21 @@ void animate() {
 		mat4 mcam(1.0f);
 		mcam = glm::translate(mcam, camMouseMov);
 		camera = camera*mcam;
+	}
+
+	// Fire a bullet.
+	if (keyboard.pressed('m')) {
+		Bullet bullet;
+		bullet.position = playerPosition;
+		bullet.velocity = 6.0f*vec3(0.0f, glm::cos(playerRotation.x), glm::sin(playerRotation.x));
+		bullets.push_back(bullet);
+	}
+
+	// Update bullets.
+	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end();) {
+		ib->update(delta);
+		if (ib->age < 5.0f) ++ib;
+		else ib = bullets.erase(ib);
 	}
 
 	// Update camera.
@@ -498,6 +524,7 @@ int main(int argc, char** argv) {
 	glLoadIdentity();
 
 	// Initialize resources.
+	resources::initializeTextures();
 	initializelightPositions();
 	initializeSurface();
 	initializeFloor();
