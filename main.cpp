@@ -573,12 +573,12 @@ void animate() {
 	// Collide player with obstacles
 	for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end(); ++io) {
 		if (
-			playerPosition.y > (io->position.y - io->scale.y/2.0f) &&
-			playerPosition.y < (io->position.y + io->scale.y/2.0f) &&
+			playerPosition.y+0.5f > (io->position.y - io->scale.y/2.0f) &&
+			playerPosition.y-0.5f < (io->position.y + io->scale.y/2.0f) &&
 			playerPosition.z > (io->position.z - io->scale.z/2.0f) &&
 			playerPosition.z < (io->position.z + io->scale.z/2.0f)
 		) {
-			playerPosition.y = io->position.y - io->scale.y/2.0f;
+			playerPosition.y = (io->position.y - io->scale.y/2.0f) - 0.5f;
 		}
 	}
 
