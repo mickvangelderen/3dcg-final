@@ -71,6 +71,16 @@ vector<vec4> lightPositions;
 vector<vec4> lightDiffuses;
 vector<float> lightIntensities;
 
+GLfloat no_mat[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat mat_ambient[] = { 0.7, 0.7, 0.7, 1.0 };
+GLfloat mat_ambient_color[] = { 0.8, 0.8, 0.2, 1.0 };
+GLfloat mat_diffuse[] = { 0.1, 0.5, 0.8, 1.0 };
+GLfloat mat_specular[] = { 0.3, 0.3, 0.3, 1.0 };
+GLfloat no_shininess[] = { 0.0 };
+GLfloat low_shininess[] = { 50.0 };
+GLfloat high_shininess[] = { 100.0 };
+GLfloat mat_emission[] = {0.3, 0.2, 0.2, 0.0};
+
 void initializelightPositions() {
 	lightPositions.resize(3);
 	lightPositions[0] = vec4( 1.0f, 1.0f, 3.0f, 1.0f);
@@ -130,6 +140,11 @@ void initializeSurface() {
 }
 
 void drawSurface() {
+   glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+   glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
+
 	glBegin(GL_TRIANGLES);
 	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
 		ivec3 ivs = surfaceTriangles[it];
@@ -269,6 +284,11 @@ void initializePlayer() {
 }
 
 void drawPlayer() {
+   glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+   glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+
 	if (keyboard.held(' ')) {
 		daveTheMinionFlapping.draw();
 	} else {
@@ -512,6 +532,8 @@ int main(int argc, char** argv) {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
+	GLfloat light_specular[]={0.0,0.5,1.0,1.0};
+	glLightfv(GL_LIGHT1,GL_SPECULAR,light_specular);
 	glEnable(GL_LIGHT2);
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_NORMALIZE);
