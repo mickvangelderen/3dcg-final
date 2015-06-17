@@ -1,9 +1,15 @@
+COMPILER = g++
+SOURCES = main.cpp lib/*.cpp
+INCLUDES = -I.
+LIBRARIES = -L./GL -lGL -lGLU -lglut
+WARNINGS = -Wall -Wno-comment
+
 .PHONY: all
 all: build run
 
 .PHONY: build
 build:
-	g++ main.cpp lib/*.cpp -I. -L./GL -lGL -lGLU -lglut -o bin/game
+	g++ $(SOURCES) $(INCLUDES) $(LIBRARIES) $(WARNINGS) -o bin/game
 
 .PHONY: run
 run:
