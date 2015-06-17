@@ -252,9 +252,11 @@ void renderfloor(const mat4 & transform) {
 // Player.
 
 vec3 playerPosition(4.0f, 0.0f, 0.5f);
+vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
+vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
 vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
-vec3 playerLegRotation(0.0f);
+float playerLegRotation = 0.0f;
 vec3 playerScale(0.2f);
 Model daveTheMinion = Model("models/dave-the-minion");
 Model daveTheMinionFlapping = Model("models/dave-the-minion-flapping");
@@ -276,8 +278,11 @@ void drawPlayerLeg() {
 	glutSolidCube(1);
 }
 
-void renderPlayerLeg(const mat4 & transform) {
-	mat4 local = glm::scale(transform, vec3(0.3f, 0.3f, 1.0f));
+void renderPlayerLeg(const mat4 & transform, float direction) {
+	mat4 local = transform;
+	local = glm::rotate(local, sin(direction*playerLegRotation)*0.5f, vec3(1.0f, 0.0f, 0.0f));
+	local = glm::scale(local, vec3(0.08f, 0.08f, 0.24f));
+	local = glm::translate(local, vec3(0.0f, 0.0f, -0.5f));
 	glLoadMatrixf(glm::value_ptr(local));
 	drawPlayerLeg();
 }
@@ -289,8 +294,8 @@ void renderPlayer(const mat4 & transform) {
 	local = glm::rotate(local, playerRotation.z, vec3(0.0f, 0.0f, 1.0f));
 	glLoadMatrixf(glm::value_ptr(local));
 	drawLight(2, lightPositions[2], lightDiffuses[2], lightIntensities[2]);
-	renderPlayerLeg(glm::translate(local, vec3(-1.0f, 0.0f, 0.0f)));
-	renderPlayerLeg(glm::translate(local, vec3( 1.0f, 0.0f, 0.0f)));
+	renderPlayerLeg(glm::translate(local, vec3(-0.06f, 0.0f, -0.2f)), -1.0f);
+	renderPlayerLeg(glm::translate(local, vec3( 0.06f, 0.0f, -0.2f)),  1.0f);
 	// Model changes.
 	local = glm::scale(local, playerScale);
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
@@ -362,14 +367,21 @@ void animate() {
 
 	// Player movement.
 	if (keyboard.pressed(' ')) playerVelocity += vec3(0.0f, 0.0f, 4.0f);
-	playerVelocity += delta*vec3(0.0f, 0.0f, -8.0f);
+	playerVelocity += delta*vec3(0.0f, 0.0f, -12.0f);
 	playerVelocity *= 0.95;
 	playerPosition += delta*playerVelocity;
-	if (playerPosition.z < 0) {
-		playerPosition.z = 0.0f;
+	if (playerPosition.z < playerMinPosition.z) {
+		playerPosition.z = playerMinPosition.z;
 		playerVelocity.z = max(playerVelocity.z, 0.0f);
 	}
+	if (playerPosition.z > playerMaxPosition.z) {
+		playerPosition.z = playerMaxPosition.z;
+		playerVelocity.z = min(playerVelocity.z, 0.0f);
+	}
 	playerRotation.x = atan2(playerVelocity.z, 4);
+
+	// Player legs.
+	if (playerPosition.z == playerMinPosition.z) playerLegRotation += delta*8.0f;
 
 	// Mouse movement.
 	vec3 camMouseMov(-0.007f*mouse.dx, 0.007f*mouse.dy, 0.0f);
