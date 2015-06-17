@@ -1,4 +1,4 @@
-#include "lib/model.h"
+#include "lib/Model.h"
 
 using std::cout;
 using std::cin;

@@ -39,8 +39,6 @@ Keyboard keyboard(256);
 Keyboard special(256);
 Mouse mouse;
 
-bool drawLightsEnabled = false;
-
 // Axes
 
 void drawAxes(float length = 1) {
@@ -64,51 +62,42 @@ void drawAxes(float length = 1) {
 	glPopAttrib();
 }
 
-// Lights.
+// lightPositions.
 
-vector<vec4> lights;
-vector<vec4> lightsDiffuse;
+vector<vec4> lightPositions;
+vector<vec4> lightDiffuses;
 vector<float> lightIntensities;
 
-void initializeLights() {
-	lights.resize(3);
-	lights[0] = vec4( 1.0f, 1.0f, 3.0f, 1.0f);
-	lights[1] = vec4(-2.0f, 4.0f, 5.0f, 1.0f);
-	lights[2] = vec4(4.0f, 0.0f, 0.5f, 1.0f);
-	lightsDiffuse.resize(3);
-	lightsDiffuse[0] = vec4( 1, 1, 0.8f, 1 );
-	lightsDiffuse[1] = vec4( 0, 0.1f, 0.3f, 1 );
-	lightsDiffuse[2] = vec4( 1.0f, 0.9f, 0.4f, 1 );
+void initializelightPositions() {
+	lightPositions.resize(3);
+	lightPositions[0] = vec4( 1.0f, 1.0f, 3.0f, 1.0f);
+	lightPositions[1] = vec4(-2.0f, 4.0f, 5.0f, 1.0f);
+	lightPositions[2] = vec4(0.0f, 0.4f, 0.6f, 1.0f);
+	lightDiffuses.resize(3);
+	lightDiffuses[0] = vec4( 1, 1, 0.8f, 1 );
+	lightDiffuses[1] = vec4( 0, 0.1f, 0.3f, 1 );
+	lightDiffuses[2] = vec4( 1.0f, 0.8f, 0.3f, 1 );
 	lightIntensities.resize(3, 1.0f);
-
+	lightIntensities[1] = 0.8f;
+	lightIntensities[2] = 0.4f;
 	glLighti(GL_LIGHT2, GL_CONSTANT_ATTENUATION, 0.0f);
 	glLighti(GL_LIGHT2, GL_LINEAR_ATTENUATION, 1.0f);
-	glLighti(GL_LIGHT2, GL_CONSTANT_ATTENUATION, 0.0f);
+	// glLighti(GL_LIGHT2, GL_CONSTANT_ATTENUATION, 0.0f);
 }
 
-void drawLight(const vec3 & color) {
-	if (!drawLightsEnabled) return;
+void drawLight(int index, const vec4 position, const vec4 & diffuse, float intensity) {
+	glLightfv(GL_LIGHT0 + index, GL_DIFFUSE, glm::value_ptr(intensity*diffuse));
+	glLightfv(GL_LIGHT0 + index, GL_POSITION, glm::value_ptr(position));
+	if (!keyboard.held('/')) return;
+	if (position.w == 0.0f) return;
+	glPushMatrix();
 	glPushAttrib(GL_LIGHTING);
 		glDisable(GL_LIGHTING);
-		glColor3fv(glm::value_ptr(color));
+		glTranslatef(position.x/position.w, position.y/position.w, position.z/position.w);
+		glColor3fv(glm::value_ptr(vec3(diffuse)));
 		glutSolidSphere(1, 8, 8);
 	glPopAttrib();
-}
-
-void renderLights(const mat4 & transform) {
-	glLoadMatrixf(glm::value_ptr(transform));
-	for (vector<vec3>::size_type il = 0; il < lights.size(); il++) {
-		vec4 diffuse = lightIntensities[il]*lightsDiffuse[il];
-		vec4 light = lights[il];
-		if (light.w == 0.0f) return;
-		vec3 pos = vec3(light)/light.w;
-		glPushMatrix();
-			glTranslatef(pos.x, pos.y, pos.z);
-			drawLight(vec3(diffuse));
-		glPopMatrix();
-		glLightfv(GL_LIGHT0 + il, GL_DIFFUSE, glm::value_ptr(diffuse));
-		glLightfv(GL_LIGHT0 + il, GL_POSITION, glm::value_ptr(light));
-	}
+	glPopMatrix();
 }
 
 // Surface.
@@ -267,13 +256,18 @@ vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
 vec3 playerScale(0.2f);
 Model daveTheMinion = Model("models/dave-the-minion");
+Model daveTheMinionFlapping = Model("models/dave-the-minion-flapping");
 
 void initializePlayer() {
 
 }
 
 void drawPlayer() {
-	daveTheMinion.draw();
+	if (keyboard.held(' ')) {
+		daveTheMinionFlapping.draw();
+	} else {
+		daveTheMinion.draw();
+	}
 }
 
 void renderPlayer(const mat4 & transform) {
@@ -281,6 +275,8 @@ void renderPlayer(const mat4 & transform) {
 	local = glm::rotate(local, playerRotation.x, vec3(1.0f, 0.0f, 0.0f));
 	local = glm::rotate(local, playerRotation.y, vec3(0.0f, 1.0f, 0.0f));
 	local = glm::rotate(local, playerRotation.z, vec3(0.0f, 0.0f, 1.0f));
+	glLoadMatrixf(glm::value_ptr(local));
+	drawLight(2, lightPositions[2], lightDiffuses[2], lightIntensities[2]);
 	local = glm::scale(local, playerScale);
 	// Model rotation.
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
@@ -317,16 +313,17 @@ void render() {
 	mat4 transform = glm::inverse(camera);
 	glLoadMatrixf(glm::value_ptr(transform));
 
-	renderLights(transform);
-
-	glLoadMatrixf(glm::value_ptr(transform));
-	drawAxes();
+	if (keyboard.held('/')) drawAxes();
 
 	renderSurface(transform);
 
 	renderfloor(transform);
 
 	renderPlayer(transform);
+
+	glLoadMatrixf(glm::value_ptr(transform));
+	drawLight(0, lightPositions[0], lightDiffuses[0], lightIntensities[0]);
+	drawLight(1, lightPositions[1], lightDiffuses[1], lightIntensities[1]);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -346,14 +343,8 @@ void animate() {
 
 	// Update day/night cycle.
 	daynight += delta*0.4f;
-	lights[0] = vec4(0.0f, 8*cos(daynight), 8*sin(daynight), 1.0f);
+	lightPositions[0] = vec4(0.0f, 8*cos(daynight), 8*sin(daynight), 1.0f);
 	lightIntensities[0] = (sin(daynight) + 1.0f)/2.0f;
-
-	// Update player light.
-	lights[2] = vec4(playerPosition + vec3(0.0f, 0.1f, 0.4f), 1.0f);
-
-	// Debug things.
-	drawLightsEnabled = keyboard.held('?');
 
 	// Player movement.
 	if (keyboard.pressed(' ')) playerVelocity += vec3(0.0f, 0.0f, 4.0f);
@@ -481,7 +472,7 @@ int main(int argc, char** argv) {
 	glLoadIdentity();
 
 	// Initialize resources.
-	initializeLights();
+	initializelightPositions();
 	initializeSurface();
 	initializeFloor();
 	initializePlayer();
