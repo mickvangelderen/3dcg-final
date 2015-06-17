@@ -9,7 +9,9 @@ using glm::vec3;
 class Bullet {
 public:
 	vec3 position;
+	vec3 rotation;
 	vec3 velocity;
+	bool flying = true;
 	float age = 0;
 
 	void update(float delta);

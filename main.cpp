@@ -505,6 +505,10 @@ void animate() {
 	// Update bullets.
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end();) {
 		ib->update(delta);
+		if (ib->position.z <= 0.0f) {
+			ib->flying = false;
+			ib->velocity = vec3(0.0f, -3.0f, 0.0f);
+		}
 		if (ib->age < 5.0f) ++ib;
 		else ib = bullets.erase(ib);
 	}
@@ -515,13 +519,13 @@ void animate() {
 		spawnNextObstacle = glm::linearRand(1.0f, 3.5f);
 
 		Obstacle obstacle;
+		obstacle.scale = vec3(2.0f, 1.0f, glm::linearRand(1.0f, 4.0f));
 		obstacle.position = vec3(
 			playerPosition.x,
 			playerPosition.y + 10.0,
-			0.0f
+			obstacle.scale.z/2.0f - 0.0001f
 		);
 		obstacle.velocity = vec3(0.0f, -3.0f, 0.0f);
-		obstacle.scale = vec3(2.0f, 1.0f, glm::linearRand(1.0f, 8.0f));
 		obstacles.push_back(obstacle);
 	}
 
@@ -530,6 +534,26 @@ void animate() {
 		io->update(delta);
 		if (io->position.y >= -10.0f) ++io;
 		else io = obstacles.erase(io);
+	}
+
+	// Collide bullets and obstacles.
+	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end();) {
+		bool hit = false;
+		for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end();) {
+			if (
+				ib->position.y > (io->position.y - io->scale.y/2.0f) &&
+				ib->position.y < (io->position.y + io->scale.y/2.0f) &&
+				ib->position.z > (io->position.z - io->scale.z/2.0f) &&
+				ib->position.z < (io->position.z + io->scale.z/2.0f)
+			) {
+				hit = true;
+				io = obstacles.erase(io);
+				break;
+			} else io++;
+		}
+		if (hit) {
+			ib = bullets.erase(ib);
+		} else ib++;
 	}
 
 	// Update camera.
