@@ -121,7 +121,7 @@ void drawText(const char *string)
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_LIGHTING);
     glPushMatrix();
-    glTranslatef(2,-3.5,2.8);
+    glTranslatef(2,-3.5,3.3);
     glRotatef(-90, 0, 0, 1);
     glRotatef(90, 1, 0, 0);
     glRotatef(180, 0, 1, 0);
@@ -162,6 +162,19 @@ void renderGameOver() {
     const char* cstr = s.c_str();
     drawText(cstr);
 }
+
+// Fog.
+
+void renderFog(float r, float g, float b)
+{
+	GLfloat fog_color[] = {r,g,b};
+	glFogfv(GL_FOG_COLOR, fog_color);
+	glFogf(GL_FOG_START,1.0f);
+	glFogf(GL_FOG_END,20.0f);
+	glFogf(GL_FOG_DENSITY, 0.2f);
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+}
+
 
 // Surface.
 
@@ -319,7 +332,7 @@ void renderfloor(const mat4 & transform) {
 
 // Player.
 
-vec3 playerStartPosition(4.0f, 0.0f, 0.5f);
+vec3 playerStartPosition(4.0f, -1.5f, 0.5f);
 vec3 playerPosition = playerStartPosition;
 vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
 vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
@@ -399,7 +412,7 @@ void initializeCamera() {
 	camera = glm::rotate(camera, glm::two_thirds<float>()*glm::pi<float>(), vec3(1.0f, 1.0f, 1.0f));
 	camera = glm::inverse(camera);
 	camera = glm::rotate(camera, 0.1f, vec3(0.0f, 1.0f, 0.0f)); // Pitch forward.
-	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.0f)); // Move back and up.
+	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.5f)); // Move back and up.
 	camera = glm::inverse(camera);
 }
 
@@ -426,6 +439,8 @@ void render() {
 	renderfloor(transform);
 
 	renderPlayer(transform);
+
+	renderFog(clear.r, clear.g, clear.b);
 
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
 		ib->render(transform);
@@ -685,6 +700,8 @@ int main(int argc, char** argv) {
 	//glCullFace(GL_BACK);
 	glPolygonMode(GL_FRONT,GL_FILL);
 	glPolygonMode(GL_BACK,GL_LINE);
+
+	glEnable(GL_FOG);
 
 	glShadeModel(GL_SMOOTH);
 	glMatrixMode(GL_MODELVIEW);
