@@ -119,15 +119,22 @@ void drawText(const char *string)
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_LIGHTING);
     glPushMatrix();
-    glTranslatef(2,-2,2.9);
+    glTranslatef(2,-3.5,2.8);
     glRotatef(-90, 0, 0, 1);
     glRotatef(90, 1, 0, 0);
     glRotatef(180, 0, 1, 0);
-    glScalef(0.001,0.001,0.001);
-    glColor3f(0,0,0);
+    glScalef(0.002,0.002,0.002);
+    glColor3f(1,0.8,0);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+	glLineWidth(2);   // 2.0 gives good results.
     for(unsigned int i = 0; i<strlen(string); i++){
         glutStrokeCharacter(GLUT_STROKE_ROMAN,string[i]);
     }
+    glDisable(GL_BLEND);
+    glDisable(GL_LINE_SMOOTH);
     glPopAttrib();
     glPopMatrix();
     glEnable(GL_LIGHTING);
