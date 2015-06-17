@@ -101,7 +101,7 @@ void renderLights(const mat4 & transform) {
 
 ivec2 surfaceSize(100, 100);
 vec3 surfaceScale(20.0f, 20.0f, 2.0f);
-vec3 surfacePosition(0.0f);
+vec3 surfacePosition(0.0f, 0.0f, 0.0f);
 vector<float> surfaceHeights;
 vector<vec3> surfaceVertices;
 vector<ivec3> surfaceTriangles;
@@ -171,7 +171,8 @@ void drawSurface() {
 }
 
 void renderSurface(const mat4 & transform) {
-	mat4 local = glm::scale(transform, surfaceScale);
+	mat4 local = glm::translate(transform, surfacePosition);
+	local = glm::scale(local, surfaceScale);
 	glLoadMatrixf(glm::value_ptr(local));
 	drawSurface();
 }
@@ -220,7 +221,9 @@ void animate() {
 	special.update();
 	mouse.update();
 
-	l1rot += 0.4f*delta;
+	surfacePosition += 1.0f*vec3(0.0f, delta, 0.0f);
+
+	l1rot += delta*0.4f;
 	lights[0] = vec4(0.0f, 8*cos(l1rot), 8*sin(l1rot), 1.0f);
 
 	vec3 crot(0.0f, 0.0f, 0.0f);

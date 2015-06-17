@@ -6,6 +6,6 @@ public:
 	float last_delta;
 	float maximum;
 
-	DeltaTimer(float maximum = 0.5f);
+	DeltaTimer(float maximum = 0.2f);
 	float update();
 };
