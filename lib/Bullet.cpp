@@ -14,11 +14,15 @@ using glm::mat4;
 void Bullet::update(float delta) {
 	age += delta;
 
-	// Wind and gravity.
-	velocity += delta*vec3(0.0f, -1.0f, -6.0f);
+	if (flying) {
+		// Wind and gravity.
+		velocity += delta*vec3(0.0f, -1.0f, -6.0f);
 
-	// Apply friction.
-	velocity *= 0.99f;
+		// Apply friction.
+		velocity *= 0.99f;
+
+		rotation.x = glm::atan(velocity.z, velocity.y);
+	}
 
 	// Update position;
 	position += delta*velocity;
@@ -76,7 +80,7 @@ void Bullet::draw() {
 void Bullet::render(const mat4 & transform) {
 	mat4 local = transform;
 	local = glm::translate(local, position);
-	local = glm::rotate(local, glm::atan(velocity.z, velocity.y), vec3(1.0f, 0.0f, 0.0f));
+	local = glm::rotate(local, rotation.x, vec3(1.0f, 0.0f, 0.0f));
 	// Model.
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(0.0f, 1.0f, 0.0f));
