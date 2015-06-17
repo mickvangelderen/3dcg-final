@@ -25,6 +25,7 @@
 using glm::ivec2;
 using glm::ivec3;
 using glm::mat4;
+using glm::vec2;
 using glm::vec3;
 using glm::vec4;
 using std::cout;
@@ -101,6 +102,7 @@ void renderLights(const mat4 & transform) {
 
 ivec2 surfaceSize(100, 100);
 vec3 surfaceScale(20.0f, 20.0f, 2.0f);
+vec2 surfaceView(0.0f, 0.0f);
 vec3 surfacePosition(0.0f, 0.0f, 0.0f);
 vector<float> surfaceHeights;
 vector<vec3> surfaceVertices;
@@ -118,14 +120,36 @@ void initializeSurface() {
 	levels[1].granularity = 0.5f; levels[1].min = -0.10f; levels[1].max = 0.10f;
 	levels[2].granularity = 1.0f; levels[2].min = -0.04f; levels[2].max = 0.04f;
 	surfaceHeights = generate_mountain(surfaceSize.x + 1, surfaceSize.y + 1, levels);
+}
+
+void drawSurface() {
+	glBegin(GL_TRIANGLES);
+	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
+		ivec3 ivs = surfaceTriangles[it];
+		for (int iv = 0; iv < 3; iv++) {
+			glColor3fv(glm::value_ptr(surfaceColors[ivs[iv]]));
+			glNormal3fv(glm::value_ptr(surfaceNormals[ivs[iv]]));
+			glVertex3fv(glm::value_ptr(surfaceVertices[ivs[iv]]));
+		}
+	}
+	glEnd();
+}
+
+void renderSurface(const mat4 & transform) {
 
 	// Set vertex positions and colors.
 	for (int ix = 0; ix <= surfaceSize.x; ix++) {
 		for (int iy = 0; iy <= surfaceSize.y; iy++) {
 			int iv = iy + ix*(surfaceSize.y + 1);
-			float rx = (float) ix/surfaceSize.x - 0.5f;
-			float ry = (float) iy/surfaceSize.y - 0.5f;
-			float z = surfaceHeights[iv];
+			int viewx = (int) surfaceView.x;
+			int viewy = (int) surfaceView.y;
+			float rviewx = surfaceView.x - viewx;
+			float rviewy = surfaceView.y - viewy;
+			float rx = (ix - rviewx)/surfaceSize.x - 0.5f;
+			float ry = (iy - rviewy)/surfaceSize.y - 0.5f;
+			int ih = ((iy + viewy) % (surfaceSize.y + 1))
+				+ ((ix + viewx) % (surfaceSize.x + 1))*(surfaceSize.y + 1);
+			float z = surfaceHeights[ih];
 			surfaceVertices[iv] = vec3(rx, ry, z);
 
 			if (z < 0.2) surfaceColors[iv] = vec3(113, 139, 77)/256.0f;
@@ -155,22 +179,7 @@ void initializeSurface() {
 	for (vector<vec3>::size_type iv = 0; iv < surfaceNormals.size(); iv++) {
 		surfaceNormals[iv] = glm::normalize(surfaceNormals[iv]);
 	}
-}
 
-void drawSurface() {
-	glBegin(GL_TRIANGLES);
-	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
-		ivec3 ivs = surfaceTriangles[it];
-		for (int iv = 0; iv < 3; iv++) {
-			glColor3fv(glm::value_ptr(surfaceColors[ivs[iv]]));
-			glNormal3fv(glm::value_ptr(surfaceNormals[ivs[iv]]));
-			glVertex3fv(glm::value_ptr(surfaceVertices[ivs[iv]]));
-		}
-	}
-	glEnd();
-}
-
-void renderSurface(const mat4 & transform) {
 	mat4 local = glm::translate(transform, surfacePosition);
 	local = glm::scale(local, surfaceScale);
 	glLoadMatrixf(glm::value_ptr(local));
@@ -221,7 +230,8 @@ void animate() {
 	special.update();
 	mouse.update();
 
-	surfacePosition += 1.0f*vec3(0.0f, delta, 0.0f);
+	// surfacePosition += 1.0f*vec3(0.0f, delta, 0.0f);
+	surfaceView += 2.0f*vec2(0.0f, delta);
 
 	l1rot += delta*0.4f;
 	lights[0] = vec4(0.0f, 8*cos(l1rot), 8*sin(l1rot), 1.0f);
