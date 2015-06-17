@@ -37,6 +37,7 @@ void Bullet::draw() {
 	} else if (age < 0.16f) {
 		it = 7;
 	}
+
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
     	glDisable(GL_LIGHTING);
 		glEnable(GL_TEXTURE_2D);

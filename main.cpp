@@ -1,7 +1,6 @@
 #if defined(_WIN32)
 	#include <windows.h>
 #endif
-#include <math.h>
 #include "glut.h"
 #include "lib/Bullet.h"
 #include "lib/DeltaTimer.h"
@@ -10,10 +9,12 @@
 #include "lib/Keyboard.h"
 #include "lib/Model.h"
 #include "lib/Mouse.h"
+#include "lib/Obstacle.h"
 #include "lib/resources.h"
 #include <assert.h>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
@@ -21,6 +22,7 @@
 #include <glm/vec4.hpp>
 #include <iostream>
 #include <list>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -313,6 +315,11 @@ void renderPlayer(const mat4 & transform) {
 
 list<Bullet> bullets;
 
+// Obstacles.
+
+float spawnNextObstacle = 2.0f;
+list<Obstacle> obstacles;
+
 // Camera.
 
 vec3 camera_position_velocity(0.0f, 0.0f, 0.0f);
@@ -351,6 +358,10 @@ void render() {
 
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
 		ib->render(transform);
+	}
+
+	for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end(); ++io) {
+		io->render(transform);
 	}
 
 	glLoadMatrixf(glm::value_ptr(transform));
@@ -419,6 +430,29 @@ void animate() {
 		ib->update(delta);
 		if (ib->age < 5.0f) ++ib;
 		else ib = bullets.erase(ib);
+	}
+
+	// Spawn an obstacle.
+	spawnNextObstacle -= delta;
+	if (spawnNextObstacle < 0) {
+		spawnNextObstacle = glm::linearRand(1.0f, 3.5f);
+
+		Obstacle obstacle;
+		obstacle.position = vec3(
+			playerPosition.x,
+			playerPosition.y + 10.0,
+			0.0f
+		);
+		obstacle.velocity = vec3(0.0f, -3.0f, 0.0f);
+		obstacle.scale = vec3(2.0f, 1.0f, glm::linearRand(1.0f, 8.0f));
+		obstacles.push_back(obstacle);
+	}
+
+	// Update obstacles.
+	for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end();) {
+		io->update(delta);
+		if (io->position.y >= -10.0f) ++io;
+		else io = obstacles.erase(io);
 	}
 
 	// Update camera.
