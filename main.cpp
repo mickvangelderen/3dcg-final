@@ -119,14 +119,14 @@ void initializeSurface() {
 
 	// Compute normals per triangle.
 	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
-		ivec3 vis = surfaceTriangles[it];
-		vec3 v1 = surfaceVertices[vis[0]];
-		vec3 v2 = surfaceVertices[vis[1]];
-		vec3 v3 = surfaceVertices[vis[2]];
+		ivec3 ivs = surfaceTriangles[it];
+		vec3 v1 = surfaceVertices[ivs[0]];
+		vec3 v2 = surfaceVertices[ivs[1]];
+		vec3 v3 = surfaceVertices[ivs[2]];
 		vec3 n = glm::cross(v2 - v3, v2 - v1);
-		surfaceNormals[vis[0]] += n;
-		surfaceNormals[vis[1]] += n;
-		surfaceNormals[vis[2]] += n;
+		surfaceNormals[ivs[0]] += n;
+		surfaceNormals[ivs[1]] += n;
+		surfaceNormals[ivs[2]] += n;
 	}
 
 	// Normalize normals.
@@ -138,18 +138,12 @@ void initializeSurface() {
 void drawSurface(const mat4 & transform) {
 	glBegin(GL_TRIANGLES);
 	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
-		ivec3 vis = surfaceTriangles[it];
-		glColor3fv(glm::value_ptr(surfaceColors[vis[0]]));
-		glNormal3fv(glm::value_ptr(surfaceNormals[vis[0]]));
-		glVertex3fv(glm::value_ptr(surfaceVertices[vis[0]]));
-
-		glColor3fv(glm::value_ptr(surfaceColors[vis[1]]));
-		glNormal3fv(glm::value_ptr(surfaceNormals[vis[1]]));
-		glVertex3fv(glm::value_ptr(surfaceVertices[vis[1]]));
-
-		glColor3fv(glm::value_ptr(surfaceColors[vis[2]]));
-		glNormal3fv(glm::value_ptr(surfaceNormals[vis[2]]));
-		glVertex3fv(glm::value_ptr(surfaceVertices[vis[2]]));
+		ivec3 ivs = surfaceTriangles[it];
+		for (int iv = 0; iv < 3; iv++) {
+			glColor3fv(glm::value_ptr(surfaceColors[ivs[iv]]));
+			glNormal3fv(glm::value_ptr(surfaceNormals[ivs[iv]]));
+			glVertex3fv(glm::value_ptr(surfaceVertices[ivs[iv]]));
+		}
 	}
 	glEnd();
 }
