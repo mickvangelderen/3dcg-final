@@ -300,7 +300,8 @@ void renderPlayer(const mat4 & transform) {
 	renderPlayerLeg(glm::translate(local, vec3(-0.06f, 0.0f, -0.2f)), -1.0f);
 	renderPlayerLeg(glm::translate(local, vec3( 0.06f, 0.0f, -0.2f)),  1.0f);
 	// Model changes.
-	local = glm::rotate(local, glm::sin(playerSwag)*0.3f, vec3(0.0f, 0.0f, 1.0f));
+	local = glm::rotate(local, glm::sin(playerSwag)*0.2f, vec3(0.2f, 0.0f, 1.0f));
+	local = glm::rotate(local, glm::cos(playerSwag)*0.15f, vec3(0.0f, 0.4f, 1.0f));
 	local = glm::scale(local, playerScale);
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
 	local = glm::rotate(local, glm::pi<float>(), vec3(0.0f, 1.0f, 0.0f));
