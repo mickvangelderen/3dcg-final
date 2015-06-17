@@ -121,7 +121,7 @@ void drawText(const char *string)
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_LIGHTING);
     glPushMatrix();
-    glTranslatef(2,-3.5,2.8);
+    glTranslatef(2,-3.5,3.3);
     glRotatef(-90, 0, 0, 1);
     glRotatef(90, 1, 0, 0);
     glRotatef(180, 0, 1, 0);
@@ -401,7 +401,7 @@ void initializeCamera() {
 	camera = glm::rotate(camera, glm::two_thirds<float>()*glm::pi<float>(), vec3(1.0f, 1.0f, 1.0f));
 	camera = glm::inverse(camera);
 	camera = glm::rotate(camera, 0.1f, vec3(0.0f, 1.0f, 0.0f)); // Pitch forward.
-	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.0f)); // Move back and up.
+	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.5f)); // Move back and up.
 	camera = glm::inverse(camera);
 }
 
