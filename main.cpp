@@ -103,6 +103,37 @@ void drawLight(int index, const vec4 position, const vec4 & diffuse, float inten
 	glPopMatrix();
 }
 
+// Text (score, game over, etc)
+void drawText(const char *string)
+{
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glDisable(GL_LIGHTING);
+    glPushMatrix();
+    glTranslatef(2,-2,2.9);
+    glRotatef(-90, 0, 0, 1);
+    glRotatef(90, 1, 0, 0);
+    glRotatef(180, 0, 1, 0);
+    glScalef(0.001,0.001,0.001);
+    glColor3f(0,0,0);
+    for(unsigned int i = 0; i<strlen(string); i++){
+        glutStrokeCharacter(GLUT_STROKE_ROMAN,string[i]);
+    }
+    glPopAttrib();
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+}
+
+float score = 0;
+
+void renderGameInfo() {
+	std::stringstream ss;
+    ss << "Distance travelled: " << round(score) << " bananas";
+    std::string s = ss.str();
+    const char* cstr = s.c_str();
+
+    drawText(cstr);
+}
+
 // Surface.
 
 vec3 surfacePosition(0.0f, 0.0f, 0.0f);
@@ -323,7 +354,7 @@ void initializeCamera() {
 	camera = glm::rotate(camera, glm::two_thirds<float>()*glm::pi<float>(), vec3(1.0f, 1.0f, 1.0f));
 	camera = glm::inverse(camera);
 	camera = glm::rotate(camera, 0.1f, vec3(0.0f, 1.0f, 0.0f)); // Pitch forward.
-	camera = glm::translate(camera, vec3(-7.0f, 0.0f, -1.0f)); // Move back and up.
+	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.0f)); // Move back and up.
 	camera = glm::inverse(camera);
 }
 
@@ -338,6 +369,8 @@ void render() {
 	glClearColor(clear.r, clear.g, clear.b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
+	renderGameInfo();
+
 	mat4 transform = glm::inverse(camera);
 	glLoadMatrixf(glm::value_ptr(transform));
 
@@ -348,6 +381,8 @@ void render() {
 	renderfloor(transform);
 
 	renderPlayer(transform);
+
+	
 
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
 		ib->render(transform);
@@ -365,6 +400,8 @@ void render() {
 
 void animate() {
 	float delta = deltaTimer.update();
+	score += delta * 3;
+
 	keyboard.update();
 	special.update();
 	mouse.update();
