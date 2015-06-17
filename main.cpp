@@ -73,6 +73,16 @@ vector<vec4> lightPositions;
 vector<vec4> lightDiffuses;
 vector<float> lightIntensities;
 
+GLfloat no_mat[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat mat_ambient[] = { 0.7, 0.7, 0.7, 1.0 };
+GLfloat mat_ambient_color[] = { 0.8, 0.8, 0.2, 1.0 };
+GLfloat mat_diffuse[] = { 0.1, 0.5, 0.8, 1.0 };
+GLfloat mat_specular[] = { 0.3, 0.3, 0.3, 1.0 };
+GLfloat no_shininess[] = { 0.0 };
+GLfloat low_shininess[] = { 50.0 };
+GLfloat high_shininess[] = { 100.0 };
+GLfloat mat_emission[] = {0.3, 0.2, 0.2, 0.0};
+
 void initializelightPositions() {
 	lightPositions.resize(3);
 	lightPositions[0] = vec4( 1.0f, 1.0f, 3.0f, 1.0f);
@@ -105,6 +115,44 @@ void drawLight(int index, const vec4 position, const vec4 & diffuse, float inten
 	glPopMatrix();
 }
 
+// Text (score, game over, etc)
+void drawText(const char *string)
+{
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glDisable(GL_LIGHTING);
+    glPushMatrix();
+    glTranslatef(2,-3.5,2.8);
+    glRotatef(-90, 0, 0, 1);
+    glRotatef(90, 1, 0, 0);
+    glRotatef(180, 0, 1, 0);
+    glScalef(0.002,0.002,0.002);
+    glColor3f(1,0.8,0);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+	glLineWidth(2);   // 2.0 gives good results.
+    for(unsigned int i = 0; i<strlen(string); i++){
+        glutStrokeCharacter(GLUT_STROKE_ROMAN,string[i]);
+    }
+    glDisable(GL_BLEND);
+    glDisable(GL_LINE_SMOOTH);
+    glPopAttrib();
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+}
+
+float score = 0;
+
+void renderGameInfo() {
+	std::stringstream ss;
+    ss << "Distance travelled: " << round(score) << " bananas";
+    std::string s = ss.str();
+    const char* cstr = s.c_str();
+
+    drawText(cstr);
+}
+
 // Surface.
 
 vec3 surfacePosition(0.0f, 0.0f, 0.0f);
@@ -132,6 +180,11 @@ void initializeSurface() {
 }
 
 void drawSurface() {
+   glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+   glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
+
 	glBegin(GL_TRIANGLES);
 	for (vector<ivec3>::size_type it = 0; it < surfaceTriangles.size(); it++) {
 		ivec3 ivs = surfaceTriangles[it];
@@ -271,6 +324,11 @@ void initializePlayer() {
 }
 
 void drawPlayer() {
+   glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+   glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+
 	if (keyboard.held(' ')) {
 		daveTheMinionFlapping.draw();
 	} else {
@@ -330,7 +388,7 @@ void initializeCamera() {
 	camera = glm::rotate(camera, glm::two_thirds<float>()*glm::pi<float>(), vec3(1.0f, 1.0f, 1.0f));
 	camera = glm::inverse(camera);
 	camera = glm::rotate(camera, 0.1f, vec3(0.0f, 1.0f, 0.0f)); // Pitch forward.
-	camera = glm::translate(camera, vec3(-7.0f, 0.0f, -1.0f)); // Move back and up.
+	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.0f)); // Move back and up.
 	camera = glm::inverse(camera);
 }
 
@@ -345,6 +403,8 @@ void render() {
 	glClearColor(clear.r, clear.g, clear.b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
+	renderGameInfo();
+
 	mat4 transform = glm::inverse(camera);
 	glLoadMatrixf(glm::value_ptr(transform));
 
@@ -355,6 +415,8 @@ void render() {
 	renderfloor(transform);
 
 	renderPlayer(transform);
+
+	
 
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
 		ib->render(transform);
@@ -376,6 +438,8 @@ void render() {
 
 void animate() {
 	float delta = deltaTimer.update();
+	score += delta * 3;
+
 	keyboard.update();
 	special.update();
 	mouse.update();
@@ -546,6 +610,8 @@ int main(int argc, char** argv) {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
+	GLfloat light_specular[]={0.0,0.5,1.0,1.0};
+	glLightfv(GL_LIGHT1,GL_SPECULAR,light_specular);
 	glEnable(GL_LIGHT2);
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_NORMALIZE);
