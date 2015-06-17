@@ -533,7 +533,7 @@ void animate() {
 		spawnNextObstacle = glm::linearRand(1.0f, 3.5f);
 
 		Obstacle obstacle;
-		obstacle.scale = vec3(2.0f, 1.0f, glm::linearRand(1.0f, 4.0f));
+		obstacle.scale = vec3(0.75f, 0.75f, glm::linearRand(1.0f, 3.0f));
 		obstacle.position = vec3(
 			playerStartPosition.x,
 			playerStartPosition.y + 10.0,
