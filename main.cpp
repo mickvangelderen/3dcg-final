@@ -261,8 +261,8 @@ vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
 float playerSwag = 0.0f;
 vec3 playerScale(0.2f);
-Model daveTheMinion = Model("models/dave-the-minion");
-Model daveTheMinionFlapping = Model("models/dave-the-minion-flapping");
+Model daveTheMinion = Model("models/dave2");
+Model daveTheMinionFlapping = Model("models/dave2-flap");
 
 void initializePlayer() {
 
