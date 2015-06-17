@@ -143,13 +143,23 @@ void drawText(const char *string)
 }
 
 float score = 0;
+bool gameOver = false;
 
 void renderGameInfo() {
+	if (gameOver) return;
 	std::stringstream ss;
-    ss << "Distance travelled: " << round(score) << " bananas";
+	ss << "Distance travelled: " << round(score) << " bananas";
+	std::string s = ss.str();
+	const char* cstr = s.c_str();
+	drawText(cstr);
+}
+
+void renderGameOver() {
+	if (!gameOver) return;
+	std::stringstream ss;
+    ss << "GAME OVER, you scored: " << round(score) << " bananas!";
     std::string s = ss.str();
     const char* cstr = s.c_str();
-
     drawText(cstr);
 }
 
@@ -309,7 +319,8 @@ void renderfloor(const mat4 & transform) {
 
 // Player.
 
-vec3 playerPosition(4.0f, 0.0f, 0.5f);
+vec3 playerStartPosition(4.0f, 0.0f, 0.5f);
+vec3 playerPosition = playerStartPosition;
 vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
 vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
 vec3 playerRotation(0.0f);
@@ -416,8 +427,6 @@ void render() {
 
 	renderPlayer(transform);
 
-
-
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
 		ib->render(transform);
 	}
@@ -430,6 +439,10 @@ void render() {
 	drawLight(0, lightPositions[0], lightDiffuses[0], lightIntensities[0]);
 	drawLight(1, lightPositions[1], lightDiffuses[1], lightIntensities[1]);
 
+	renderGameInfo();
+
+	renderGameOver();
+
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
@@ -438,7 +451,6 @@ void render() {
 
 void animate() {
 	float delta = deltaTimer.update();
-	score += delta * 3;
 
 	keyboard.update();
 	special.update();
@@ -508,8 +520,8 @@ void animate() {
 		Obstacle obstacle;
 		obstacle.scale = vec3(2.0f, 1.0f, glm::linearRand(1.0f, 4.0f));
 		obstacle.position = vec3(
-			playerPosition.x,
-			playerPosition.y + 10.0,
+			playerStartPosition.x,
+			playerStartPosition.y + 10.0,
 			obstacle.scale.z/2.0f - 0.0001f
 		);
 		obstacle.velocity = vec3(0.0f, -3.0f, 0.0f);
@@ -541,6 +553,35 @@ void animate() {
 		if (hit) {
 			ib = bullets.erase(ib);
 		} else ib++;
+	}
+
+	// Collide player with obstacles
+	for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end(); ++io) {
+		if (
+			playerPosition.y > (io->position.y - io->scale.y/2.0f) &&
+			playerPosition.y < (io->position.y + io->scale.y/2.0f) &&
+			playerPosition.z > (io->position.z - io->scale.z/2.0f) &&
+			playerPosition.z < (io->position.z + io->scale.z/2.0f)
+		) {
+			playerPosition.y = io->position.y - io->scale.y/2.0f;
+		}
+	}
+
+	// Update score.
+	if (!gameOver) score += delta * 3;
+
+	// Check if player went out of bounds
+	if (playerPosition.y < -6.0f) {
+		gameOver = true;
+	}
+
+	if (gameOver && keyboard.pressed('n')) {
+		gameOver = false;
+		playerPosition = playerStartPosition;
+		score = 0.0f;
+		bullets.clear();
+		obstacles.clear();
+		spawnNextObstacle = 2.0f;
 	}
 
 	// Update camera.
