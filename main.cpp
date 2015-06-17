@@ -289,8 +289,8 @@ void renderPlayer(const mat4 & transform) {
 	local = glm::rotate(local, playerRotation.z, vec3(0.0f, 0.0f, 1.0f));
 	glLoadMatrixf(glm::value_ptr(local));
 	drawLight(2, lightPositions[2], lightDiffuses[2], lightIntensities[2]);
-	glRenderPlayerLeg(glm::translate(local, vec3(-1.0f, 0.0f, 0.0f)));
-	glRenderPlayerLeg(glm::translate(local, vec3( 1.0f, 0.0f, 0.0f)));
+	renderPlayerLeg(glm::translate(local, vec3(-1.0f, 0.0f, 0.0f)));
+	renderPlayerLeg(glm::translate(local, vec3( 1.0f, 0.0f, 0.0f)));
 	// Model changes.
 	local = glm::scale(local, playerScale);
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
