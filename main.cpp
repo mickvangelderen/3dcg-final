@@ -162,6 +162,7 @@ void renderSurface(const mat4 & transform) {
 
 			float c = (cos(rsx*glm::pi<float>()) + 1.0f)/2.0f; // Flatten 1 side.
 			float z = c*surfaceHeights[ih];
+			if (z < 0.0f) z = 0.0f;
 			surfaceVertices[iv] = vec3(rsx - offsetx - 0.5, rsy - offsety - 0.5, z);
 
 			if (z < 0.2) surfaceColors[iv] = vec3(113, 139, 77)/256.0f;
@@ -198,6 +199,54 @@ void renderSurface(const mat4 & transform) {
 	drawSurface();
 }
 
+// Floor.
+
+vec3 floorPosition(4.0f, 0.0f, -0.0001f);
+vec3 floorScale(6.0f, 10.0f, 1.0f);
+vec3 floorColor = vec3(113, 139, 77)/256.0f;
+ivec2 floorSize(60, 100);
+vector<vec3> floorVertices;
+vector<ivec3> floorTriangles;
+
+void initializeFloor() {
+	floorVertices.resize((floorSize.x + 1)*(floorSize.y + 1));
+	floorTriangles = generate_grid(floorSize.x, floorSize.y);
+
+	// Set vertex positions and colors.
+	for (int ix = 0; ix <= floorSize.x; ix++) {
+		for (int iy = 0; iy <= floorSize.y; iy++) {
+			// Compute vertex index.
+			int iv = iy + ix*(floorSize.y + 1);
+
+			// Compute x and y coordinates relative to the surface.
+			float rsx = (float) ix/floorSize.x;
+			float rsy = (float) iy/floorSize.y;
+			floorVertices[iv] = vec3(rsx - 0.5f, rsy - 0.5f, 0);
+		}
+	}
+}
+
+void drawFloor() {
+	glColor3fv(glm::value_ptr(floorColor));
+	glNormal3f(0.0f, 0.0f, 1.0f);
+	glBegin(GL_TRIANGLES);
+	for (vector<ivec3>::size_type it = 0; it < floorTriangles.size(); it++) {
+		ivec3 ivs = floorTriangles[it];
+		for (int iv = 0; iv < 3; iv++) {
+			glVertex3fv(glm::value_ptr(floorVertices[ivs[iv]]));
+		}
+	}
+	glEnd();
+}
+
+void renderfloor(const mat4 & transform) {
+	mat4 local = glm::translate(transform, floorPosition);
+	local = glm::scale(local, floorScale);
+	glLoadMatrixf(glm::value_ptr(local));
+	glColor3fv(glm::value_ptr(floorColor));
+	drawFloor();
+}
+
 // Camera.
 
 vec3 camera_position_velocity(0.0f, 0.0f, 0.0f);
@@ -227,6 +276,8 @@ void render() {
 	drawAxes();
 
 	renderSurface(transform);
+
+	renderfloor(transform);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -285,6 +336,10 @@ void onKeyDown(unsigned char key, int x, int y) {
 	const char ESC = 27;
 
 	if (key == ESC) exit(0);
+	if (key == '1') glEnable(GL_LIGHT0);
+	if (key == '!') glDisable(GL_LIGHT0);
+	if (key == '2') glEnable(GL_LIGHT1);
+	if (key == '@') glDisable(GL_LIGHT1);
 }
 
 void onKeyUp(unsigned char key, int x, int y) {
@@ -360,6 +415,7 @@ int main(int argc, char** argv) {
 	// Initialize resources.
 	initializeLights();
 	initializeSurface();
+	initializeFloor();
 	initializeCamera();
 
 	// Configure glut.
