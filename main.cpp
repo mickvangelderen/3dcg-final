@@ -259,7 +259,7 @@ vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
 vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
 vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
-float playerLegRotation = 0.0f;
+float playerSwag = 0.0f;
 vec3 playerScale(0.2f);
 Model daveTheMinion = Model("models/dave2");
 Model daveTheMinionFlapping = Model("models/dave2-flap");
@@ -283,7 +283,7 @@ void drawPlayerLeg() {
 
 void renderPlayerLeg(const mat4 & transform, float direction) {
 	mat4 local = transform;
-	local = glm::rotate(local, glm::sin(direction*playerLegRotation)*0.5f, vec3(1.0f, 0.0f, 0.0f));
+	local = glm::rotate(local, glm::sin(direction*playerSwag)*0.5f, vec3(1.0f, 0.0f, 0.0f));
 	local = glm::scale(local, vec3(0.08f, 0.08f, 0.24f));
 	local = glm::translate(local, vec3(0.0f, 0.0f, -0.5f));
 	glLoadMatrixf(glm::value_ptr(local));
@@ -300,6 +300,7 @@ void renderPlayer(const mat4 & transform) {
 	renderPlayerLeg(glm::translate(local, vec3(-0.06f, 0.0f, -0.2f)), -1.0f);
 	renderPlayerLeg(glm::translate(local, vec3( 0.06f, 0.0f, -0.2f)),  1.0f);
 	// Model changes.
+	local = glm::rotate(local, glm::sin(playerSwag)*0.3f, vec3(0.0f, 0.0f, 1.0f));
 	local = glm::scale(local, playerScale);
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
 	local = glm::rotate(local, glm::pi<float>(), vec3(0.0f, 1.0f, 0.0f));
@@ -392,7 +393,7 @@ void animate() {
 	playerRotation.x = atan2(playerVelocity.z, 4);
 
 	// Player legs.
-	if (playerPosition.z == playerMinPosition.z) playerLegRotation += delta*8.0f;
+	if (playerPosition.z == playerMinPosition.z) playerSwag += delta*8.0f;
 
 	// Mouse movement.
 	vec3 camMouseMov(-0.007f*mouse.dx, 0.007f*mouse.dy, 0.0f);
