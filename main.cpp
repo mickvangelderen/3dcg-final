@@ -153,6 +153,19 @@ void renderGameInfo() {
     drawText(cstr);
 }
 
+// Fog.
+
+void renderFog(float r, float g, float b)
+{
+	GLfloat fog_color[] = {r,g,b};
+	glFogfv(GL_FOG_COLOR, fog_color);
+	glFogf(GL_FOG_START,1.0f);
+	glFogf(GL_FOG_END,20.0f);
+	glFogf(GL_FOG_DENSITY, 0.2f);
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+}
+
+
 // Surface.
 
 vec3 surfacePosition(0.0f, 0.0f, 0.0f);
@@ -416,7 +429,7 @@ void render() {
 
 	renderPlayer(transform);
 
-	
+	renderFog(clear.r, clear.g, clear.b);
 
 	for (list<Bullet>::iterator ib = bullets.begin(); ib != bullets.end(); ++ib) {
 		ib->render(transform);
@@ -620,6 +633,8 @@ int main(int argc, char** argv) {
 	//glCullFace(GL_BACK);
 	glPolygonMode(GL_FRONT,GL_FILL);
 	glPolygonMode(GL_BACK,GL_LINE);
+
+	glEnable(GL_FOG);
 
 	glShadeModel(GL_SMOOTH);
 	glMatrixMode(GL_MODELVIEW);
