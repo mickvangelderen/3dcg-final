@@ -1,4 +1,4 @@
-#include <GL/freeglut.h>
+#include "glut.h"
 #include "DeltaTimer.h"
 
 DeltaTimer::DeltaTimer(float maximum) {

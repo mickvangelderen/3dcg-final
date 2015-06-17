@@ -1,39 +1,42 @@
 #if defined(_WIN32)
 	#include <windows.h>
 #endif
-#include <GL/freeglut.h>
-#include <stdlib.h>
-#include <math.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include "lib/Keyboard.h"
+#include "glut.h"
 #include "lib/DeltaTimer.h"
 #include "lib/generate_grid.h"
 #include "lib/generate_mountain.h"
-#include <iostream>
+#include "lib/Keyboard.h"
+#include "lib/Mouse.h"
+#include <assert.h>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
+#include <iostream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <vector>
 
-using std::cout;
-using std::endl;
-using std::vector;
-using glm::vec3;
-using glm::vec4;
 using glm::ivec2;
 using glm::ivec3;
 using glm::mat4;
+using glm::vec3;
+using glm::vec4;
+using std::cout;
+using std::endl;
+using std::vector;
 
 vector<vec4> lights;
 DeltaTimer deltaTimer;
 
 Keyboard keyboard(256);
+Keyboard special(256);
+Mouse mouse;
 
 void initializeLights() {
 	lights.resize(2);
@@ -196,6 +199,8 @@ float l1rot = 0;
 void animate() {
 	float delta = deltaTimer.update();
 	keyboard.update();
+	special.update();
+	mouse.update();
 
 	l1rot += delta;
 	lights[0] = vec4(0.0f, 4*cos(l1rot), 4*sin(l1rot), 1.0f);
@@ -245,46 +250,36 @@ void onKeyUp(unsigned char key, int x, int y) {
 }
 
 void onSpecialKeyDown(int key, int x, int y) {
-	// keys::onSpecialDown(key);
-
+	special.press(key);
 }
 
 void onSpecialKeyUp(int key, int x, int y) {
-	// keys::onSpecialUp(key);
+	special.release(key);
 }
 
-int last_mouse_x;
-int last_mouse_y;
-float last_mouse_dx;
-float last_mouse_dy;
-
 void onMouse(int button, int state, int x, int y) {
-	// cout << "Mouse press " << button << " state " << state << " x: " << x << " y: " << y << endl;
-
-	last_mouse_x = x;
-	last_mouse_y = y;
+	mouse.state(button, state);
 
 	if (state == 1) {
-		vec3 cmov(-0.007f*last_mouse_dx, 0.007f*last_mouse_dy, 0.0f);
+		vec3 cmov(-0.007f*mouse.dx, 0.007f*mouse.dy, 0.0f);
 		camera_position_velocity = cmov;
 	}
 }
 
 
 void onMotion(int x, int y) {
-	// cout << "Mouse motion x: " << x << " y: " << y << endl;
+	mouse.position(x, y);
 
-	last_mouse_dx = x - last_mouse_x;
-	last_mouse_dy = y - last_mouse_y;
-	last_mouse_x = x;
-	last_mouse_y = y;
-
-	vec3 cmov(-0.007f*last_mouse_dx, 0.007f*last_mouse_dy, 0.0f);
+	vec3 cmov(-0.007f*mouse.dx, 0.007f*mouse.dy, 0.0f);
 
 	mat4 mcam(1.0f);
 	mcam = glm::translate(mcam, cmov);
 
 	camera = camera*mcam;
+}
+
+void onPassiveMotion(int x, int y) {
+	mouse.position(x, y);
 }
 
 void reshape(int w, int h) {
@@ -334,6 +329,7 @@ int main(int argc, char** argv) {
 	glutSpecialUpFunc(onSpecialKeyUp);
 	glutMouseFunc(onMouse);
 	glutMotionFunc(onMotion);
+	glutPassiveMotionFunc(onPassiveMotion);
 	glutDisplayFunc(render);
 	glutIdleFunc(animate);
 

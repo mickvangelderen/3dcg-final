@@ -22,19 +22,15 @@ bool Keyboard::released(int key) {
 }
 
 void Keyboard::press(int key) {
-	next[key].pressed = true;
-	next[key].held = true;
+	next[key].press();
 }
 
 void Keyboard::release(int key) {
-	next[key].released = true;
-	next[key].held = false;
+	next[key].release();
 }
 
 void Keyboard::update() {
 	for (vector<KeyState>::size_type key = 0; key < now.size(); key++) {
-		now[key] = next[key];
-		next[key].pressed = false;
-		next[key].released = false;
+		KeyState::update(now[key], next[key]);
 	}
 }
