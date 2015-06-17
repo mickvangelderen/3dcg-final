@@ -254,6 +254,7 @@ void renderfloor(const mat4 & transform) {
 vec3 playerPosition(4.0f, 0.0f, 0.5f);
 vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
+vec3 playerLegRotation(0.0f);
 vec3 playerScale(0.2f);
 Model daveTheMinion = Model("models/dave-the-minion");
 Model daveTheMinionFlapping = Model("models/dave-the-minion-flapping");
@@ -270,6 +271,17 @@ void drawPlayer() {
 	}
 }
 
+void drawPlayerLeg() {
+    glColor3f(0.024571,0.024571,0.024571);
+	glutSolidCube(1);
+}
+
+void renderPlayerLeg(const mat4 & transform) {
+	mat4 local = glm::scale(transform, vec3(0.3f, 0.3f, 1.0f));
+	glLoadMatrixf(glm::value_ptr(local));
+	drawPlayerLeg();
+}
+
 void renderPlayer(const mat4 & transform) {
 	mat4 local = glm::translate(transform, playerPosition);
 	local = glm::rotate(local, playerRotation.x, vec3(1.0f, 0.0f, 0.0f));
@@ -277,8 +289,10 @@ void renderPlayer(const mat4 & transform) {
 	local = glm::rotate(local, playerRotation.z, vec3(0.0f, 0.0f, 1.0f));
 	glLoadMatrixf(glm::value_ptr(local));
 	drawLight(2, lightPositions[2], lightDiffuses[2], lightIntensities[2]);
+	glRenderPlayerLeg(glm::translate(local, vec3(-1.0f, 0.0f, 0.0f)));
+	glRenderPlayerLeg(glm::translate(local, vec3( 1.0f, 0.0f, 0.0f)));
+	// Model changes.
 	local = glm::scale(local, playerScale);
-	// Model rotation.
 	local = glm::rotate(local, glm::half_pi<float>(), vec3(1.0f, 0.0f, 0.0f));
 	local = glm::rotate(local, glm::pi<float>(), vec3(0.0f, 1.0f, 0.0f));
 	glLoadMatrixf(glm::value_ptr(local));
