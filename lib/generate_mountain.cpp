@@ -22,7 +22,7 @@ vector<float> generate_mountain(int nx, int ny, vector<MountainGenerationLevel> 
 
 		for (int vx = 0; vx < sx; vx++) {
 			for (int vy = 0; vy < sy; vy++) {
-				int vi = vx + vy*(sx + 1);
+				int vi = vy + vx*(sy + 1);
 				v[vi] = glm::linearRand(level.min, level.max);
 			}
 		}
@@ -47,14 +47,14 @@ vector<float> generate_mountain(int nx, int ny, vector<MountainGenerationLevel> 
 				float yif = ((float) my)*((float) sy)/((float) ny);
 				int yi = (int) yif;
 				float yid = yif - ((float) yi);
-				float v00 = v[xi + 0 + (yi + 0)*(sx + 1)];
-				float v01 = v[xi + 0 + (yi + 1)*(sx + 1)];
-				float v10 = v[xi + 1 + (yi + 0)*(sx + 1)];
-				float v11 = v[xi + 1 + (yi + 1)*(sx + 1)];
-				m[mx + my*nx] +=
+				float v00 = v[yi + 0 + (xi + 0)*(sy + 1)];
+				float v01 = v[yi + 0 + (xi + 1)*(sy + 1)];
+				float v10 = v[yi + 1 + (xi + 0)*(sy + 1)];
+				float v11 = v[yi + 1 + (xi + 1)*(sy + 1)];
+				m[my + mx*ny] +=
 					v00*(1 - xid)*(1 - yid) +
-					v01*(1 - xid)*(0 + yid) +
-					v10*(0 + xid)*(1 - yid) +
+					v01*(0 + xid)*(1 - yid) +
+					v10*(1 - xid)*(0 + yid) +
 					v11*(0 + xid)*(0 + yid);
 			}
 		}

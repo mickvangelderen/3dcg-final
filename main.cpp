@@ -99,8 +99,8 @@ void renderLights(const mat4 & transform) {
 
 // Surface.
 
-ivec2 surfaceSize(40, 40);
-vec3 surfaceScale(8.0f, 8.0f, 2.0f);
+ivec2 surfaceSize(100, 100);
+vec3 surfaceScale(20.0f, 20.0f, 2.0f);
 vec3 surfacePosition(0.0f);
 vector<float> surfaceHeights;
 vector<vec3> surfaceVertices;
@@ -185,7 +185,8 @@ mat4 camera(1.0f);
 void initializeCamera() {
 	camera = glm::rotate(camera, glm::two_thirds<float>()*glm::pi<float>(), vec3(1.0f, 1.0f, 1.0f));
 	camera = glm::inverse(camera);
-	camera = glm::translate(camera, vec3(-4.0f, 0.0f, 0.0f));
+	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -4.0f)); // Move back and up.
+	camera = glm::rotate(camera, 0.5f, vec3(0.0f, 1.0f, 0.0f)); // Pitch forward.
 	camera = glm::inverse(camera);
 }
 
@@ -219,8 +220,8 @@ void animate() {
 	special.update();
 	mouse.update();
 
-	l1rot += delta;
-	lights[0] = vec4(0.0f, 4*cos(l1rot), 4*sin(l1rot), 1.0f);
+	l1rot += 0.4f*delta;
+	lights[0] = vec4(0.0f, 8*cos(l1rot), 8*sin(l1rot), 1.0f);
 
 	vec3 crot(0.0f, 0.0f, 0.0f);
 	if (keyboard.held('l')) crot.z = -delta;
