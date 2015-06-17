@@ -322,7 +322,7 @@ void renderfloor(const mat4 & transform) {
 
 // Player.
 
-vec3 playerPosition(4.0f, 0.0f, 0.5f);
+vec3 playerPosition(4.0f, -1.5f, 0.5f);
 vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
 vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
 vec3 playerRotation(0.0f);
