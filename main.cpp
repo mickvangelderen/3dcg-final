@@ -407,7 +407,7 @@ void animate() {
 	// Fire a bullet.
 	if (keyboard.pressed('m')) {
 		Bullet bullet;
-		bullet.position = playerPosition;
+		bullet.position = playerPosition + vec3(0.0f, 0.5f, 0.0f);
 		bullet.velocity = 6.0f*vec3(0.0f, glm::cos(playerRotation.x), glm::sin(playerRotation.x));
 		bullets.push_back(bullet);
 	}
