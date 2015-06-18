@@ -3,6 +3,7 @@
 #endif
 #include "glut.h"
 #include "lib/Bullet.h"
+#include "lib/CameraShaker.h"
 #include "lib/DeltaTimer.h"
 #include "lib/generate_grid.h"
 #include "lib/generate_mountain.h"
@@ -338,13 +339,23 @@ vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
 vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
 vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
+bool playerColliding = false;
 float playerSwag = 0.0f;
 vec3 playerScale(0.2f);
 Model daveTheMinion = Model("models/dave2");
 Model daveTheMinionFlapping = Model("models/dave2-flap");
+CameraShaker playerRecoil;
 
 void initializePlayer() {
-
+	playerPosition = playerStartPosition;
+	playerRotation = vec3(0.0f);
+	playerVelocity = vec3(0.0f);
+	playerRecoil.direction = vec3(0.0f, -0.1f, 0.0f);
+	playerRecoil.shakes = 0.5f;
+	playerRecoil.length = 0.15f;
+	playerRecoil.elapsed = playerRecoil.length;
+	playerColliding = false;
+	playerSwag = 0.0f;
 }
 
 void drawPlayer() {
@@ -379,6 +390,8 @@ void renderPlayer(const mat4 & transform) {
 	local = glm::rotate(local, playerRotation.x, vec3(1.0f, 0.0f, 0.0f));
 	local = glm::rotate(local, playerRotation.y, vec3(0.0f, 1.0f, 0.0f));
 	local = glm::rotate(local, playerRotation.z, vec3(0.0f, 0.0f, 1.0f));
+	local = glm::translate(local, playerRecoil.translation());
+
 	glLoadMatrixf(glm::value_ptr(local));
 	drawLight(2, lightPositions[2], lightDiffuses[2], lightIntensities[2]);
 	renderPlayerLeg(glm::translate(local, vec3(-0.06f, 0.0f, -0.2f)), -1.0f);
@@ -404,6 +417,8 @@ list<Obstacle> obstacles;
 
 // Camera.
 
+CameraShaker collisionCameraShaker;
+
 vec3 camera_position_velocity(0.0f, 0.0f, 0.0f);
 vec3 camera_rotation_velocity(0.0f, 0.0f, 0.0f);
 mat4 camera(1.0f);
@@ -414,6 +429,8 @@ void initializeCamera() {
 	camera = glm::rotate(camera, 0.1f, vec3(0.0f, 1.0f, 0.0f)); // Pitch forward.
 	camera = glm::translate(camera, vec3(-8.0f, 0.0f, -1.5f)); // Move back and up.
 	camera = glm::inverse(camera);
+
+	collisionCameraShaker.direction = vec3(0.0f, 0.0f, -1.0f);
 }
 
 // Rendering
@@ -429,7 +446,9 @@ void render() {
 
 	renderGameInfo();
 
-	mat4 transform = glm::inverse(camera);
+	mat4 transform = camera;
+	transform = glm::translate(transform, collisionCameraShaker.translation());
+	transform = glm::inverse(transform);
 	glLoadMatrixf(glm::value_ptr(transform));
 
 	if (keyboard.held('/')) drawAxes();
@@ -470,6 +489,10 @@ void animate() {
 	keyboard.update();
 	special.update();
 	mouse.update();
+
+	// Update camera shakers.
+	playerRecoil.update(delta);
+	collisionCameraShaker.update(delta);
 
 	// Update surface position.
 	// surfacePosition += 1.0f*vec3(0.0f, delta, 0.0f);
@@ -514,6 +537,7 @@ void animate() {
 		bullet.position = playerPosition + vec3(0.0f, 0.5f, 0.0f);
 		bullet.velocity = 6.0f*vec3(0.0f, glm::cos(playerRotation.x), glm::sin(playerRotation.x));
 		bullets.push_back(bullet);
+		playerRecoil.fire();
 	}
 
 	// Update bullets.
@@ -571,6 +595,7 @@ void animate() {
 	}
 
 	// Collide player with obstacles
+	bool hit = false;
 	for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end(); ++io) {
 		if (
 			playerPosition.y > (io->position.y - io->scale.y/2.0f) &&
@@ -578,9 +603,12 @@ void animate() {
 			playerPosition.z > (io->position.z - io->scale.z/2.0f) &&
 			playerPosition.z < (io->position.z + io->scale.z/2.0f)
 		) {
-			playerPosition.y = io->position.y - io->scale.y/2.0f;
+			hit = true;
+			playerPosition.y = io->position.y - io->scale.y/2.0f - 0.0001f;
 		}
 	}
+	if (hit && !playerColliding) collisionCameraShaker.fire();
+	playerColliding = hit;
 
 	// Update score.
 	if (!gameOver) score += delta * 3;
@@ -592,7 +620,7 @@ void animate() {
 
 	if (gameOver && keyboard.pressed('n')) {
 		gameOver = false;
-		playerPosition = playerStartPosition;
+		initializePlayer();
 		score = 0.0f;
 		bullets.clear();
 		obstacles.clear();
