@@ -335,8 +335,8 @@ void renderfloor(const mat4 & transform) {
 
 vec3 playerStartPosition(4.0f, -1.5f, 0.5f);
 vec3 playerPosition = playerStartPosition;
-vec3 playerMinPosition(-100.0f, -100.0f, 00.5f);
-vec3 playerMaxPosition( 100.0f,  100.0f, 20.0f);
+vec3 playerMinPosition(-100.0f, -100.0f, 0.5f);
+vec3 playerMaxPosition( 100.0f,  100.0f, 3.0f);
 vec3 playerRotation(0.0f);
 vec3 playerVelocity(0.0f);
 bool playerColliding = false;
@@ -534,7 +534,7 @@ void animate() {
 	// Fire a bullet.
 	if (keyboard.pressed('m')) {
 		Bullet bullet;
-		bullet.position = playerPosition + vec3(0.0f, 0.5f, 0.0f);
+		bullet.position = playerPosition + vec3(0.0f, 0.5f, glm::sin(playerRotation.x)*0.5f);
 		bullet.velocity = 6.0f*vec3(0.0f, glm::cos(playerRotation.x), glm::sin(playerRotation.x));
 		bullets.push_back(bullet);
 		playerRecoil.fire();
@@ -557,7 +557,7 @@ void animate() {
 		spawnNextObstacle = glm::linearRand(1.0f, 3.5f);
 
 		Obstacle obstacle;
-		obstacle.scale = vec3(2.0f, 1.0f, glm::linearRand(1.0f, 4.0f));
+		obstacle.scale = vec3(0.75f, 0.75f, glm::linearRand(1.0f, 3.0f));
 		obstacle.position = vec3(
 			playerStartPosition.x,
 			playerStartPosition.y + 10.0,
@@ -598,20 +598,20 @@ void animate() {
 	bool hit = false;
 	for (list<Obstacle>::iterator io = obstacles.begin(); io != obstacles.end(); ++io) {
 		if (
-			playerPosition.y > (io->position.y - io->scale.y/2.0f) &&
-			playerPosition.y < (io->position.y + io->scale.y/2.0f) &&
+			playerPosition.y + 0.5f > (io->position.y - io->scale.y/2.0f) &&
+			playerPosition.y - 0.5f < (io->position.y + io->scale.y/2.0f) &&
 			playerPosition.z > (io->position.z - io->scale.z/2.0f) &&
 			playerPosition.z < (io->position.z + io->scale.z/2.0f)
 		) {
 			hit = true;
-			playerPosition.y = io->position.y - io->scale.y/2.0f - 0.0001f;
+			playerPosition.y = (io->position.y - io->scale.y/2.0f) - 0.5f;
 		}
 	}
 	if (hit && !playerColliding) collisionCameraShaker.fire();
 	playerColliding = hit;
 
 	// Update score.
-	if (!gameOver) score += delta * 3;
+	if (!gameOver) score += delta*3;
 
 	// Check if player went out of bounds
 	if (playerPosition.y < -6.0f) {
